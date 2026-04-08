@@ -142,7 +142,7 @@ export default function Calendar() {
     const dateFormat = "d";
     const days = eachDayOfInterval({ start: startDateView, end: endDateView });
 
-    return days.map((day, idx) => {
+    return days.map((day) => {
       const isCurrentMonth = isSameMonth(day, monthStart);
       const isStart = startDate && isSameDay(day, startDate);
       const isEnd = endDate && isSameDay(day, endDate);
