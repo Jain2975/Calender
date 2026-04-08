@@ -5,3 +5,4 @@
 ### Run "npm run dev"
 
 ## According to that provided task no backend is made a simple frontend using React + TailWindCSS. 
+#### Any image used was drawn by me myself.
