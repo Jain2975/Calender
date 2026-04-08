@@ -1,4 +1,4 @@
-# This is Calender This given to showcaswe work for an internship application
+# This is Calender work for an internship application
 ## To start the project: 
 ### Clone the repo
 ### Go to terminal and run "npm i"
