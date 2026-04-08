@@ -15,6 +15,7 @@ import {
   isAfter,
 } from "date-fns";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, StickyNote } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -226,12 +227,22 @@ export default function Calendar() {
 
           <div className="absolute bottom-6 left-8 right-8 flex items-end justify-between">
             <div className="text-white">
-              <h2 className="text-4xl md:text-5xl font-outfit font-bold tracking-tight">
-                {format(currentDate, "MMMM")}
-              </h2>
-              <p className="text-lg md:text-xl font-medium opacity-80 mt-1 font-inter">
-                {format(currentDate, "yyyy")}
-              </p>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentDate.toString()}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <h2 className="text-4xl md:text-5xl font-outfit font-bold tracking-tight">
+                    {format(currentDate, "MMMM")}
+                  </h2>
+                  <p className="text-lg md:text-xl font-medium opacity-80 mt-1 font-inter">
+                    {format(currentDate, "yyyy")}
+                  </p>
+                </motion.div>
+              </AnimatePresence>
             </div>
 
             <div className="flex items-center gap-2">
@@ -307,31 +318,42 @@ export default function Calendar() {
               Saved Notes
             </h4>
             <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-              {Object.entries(notes)
-                .filter(([_, value]) => value.trim() !== "")
-                .sort((a, b) => b[0].localeCompare(a[0]))
-                .map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-700/60 shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all cursor-pointer group/note"
-                    onClick={() => handleNoteClick(key)}
-                  >
-                    <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mb-1.5 flex items-center justify-between">
-                      <span>{formatNoteLabel(key)}</span>
-                      {currentKey === key && (
-                        <span className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.8)]"></span>
-                      )}
-                    </div>
-                    <div className="text-sm text-slate-600 dark:text-slate-300 line-clamp-3 whitespace-pre-wrap group-hover/note:text-slate-800 dark:group-hover/note:text-slate-100 transition-colors">
-                      {value}
-                    </div>
-                  </div>
-                ))}
+              <AnimatePresence initial={false}>
+                {Object.entries(notes)
+                  .filter(([_, value]) => value.trim() !== "")
+                  .sort((a, b) => b[0].localeCompare(a[0]))
+                  .map(([key, value]) => (
+                    <motion.div
+                      layout
+                      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ duration: 0.2 }}
+                      key={key}
+                      className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-700/60 shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all cursor-pointer group/note"
+                      onClick={() => handleNoteClick(key)}
+                    >
+                      <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mb-1.5 flex items-center justify-between">
+                        <span>{formatNoteLabel(key)}</span>
+                        {currentKey === key && (
+                          <span className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.8)]"></span>
+                        )}
+                      </div>
+                      <div className="text-sm text-slate-600 dark:text-slate-300 line-clamp-3 whitespace-pre-wrap group-hover/note:text-slate-800 dark:group-hover/note:text-slate-100 transition-colors">
+                        {value}
+                      </div>
+                    </motion.div>
+                  ))}
+              </AnimatePresence>
 
               {Object.values(notes).every(v => v.trim() === "") && (
-                <div className="text-sm text-slate-500 dark:text-slate-400 italic text-center py-8 bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+                <motion.div 
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }} 
+                  className="text-sm text-slate-500 dark:text-slate-400 italic text-center py-8 bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-300 dark:border-slate-700"
+                >
                   No notes saved yet. Select a date to add one!
-                </div>
+                </motion.div>
               )}
             </div>
           </div>
