@@ -14,7 +14,15 @@ import {
   isBefore,
   isAfter,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, StickyNote } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon,
+  StickyNote,
+  Trash2,
+  CheckCircle2,
+  Circle,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Calendar() {
@@ -28,9 +36,18 @@ export default function Calendar() {
     return saved ? JSON.parse(saved) : {};
   });
 
+  const [doneNotes, setDoneNotes] = useState<Record<string, boolean>>(() => {
+    const saved = localStorage.getItem("calendarDoneNotes");
+    return saved ? JSON.parse(saved) : {};
+  });
+
   useEffect(() => {
     localStorage.setItem("calendarNotes", JSON.stringify(notes));
   }, [notes]);
+
+  useEffect(() => {
+    localStorage.setItem("calendarDoneNotes", JSON.stringify(doneNotes));
+  }, [doneNotes]);
 
   const getNoteKey = () => {
     if (startDate && endDate) {
@@ -51,23 +68,54 @@ export default function Calendar() {
     }));
   };
 
+  const handleDeleteNote = (e: React.MouseEvent, key: string) => {
+    e.stopPropagation();
+    setNotes((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+    setDoneNotes((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  const handleToggleDone = (e: React.MouseEvent, key: string) => {
+    e.stopPropagation();
+    setDoneNotes((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
   const formatNoteLabel = (key: string) => {
     if (key.startsWith("range-")) {
       const dateTarget = key.replace("range-", "");
       const startStr = dateTarget.substring(0, 10);
       const endStr = dateTarget.substring(11, 21);
-
-      const startParts = startStr.split('-');
-      const start = new Date(Number(startParts[0]), Number(startParts[1]) - 1, Number(startParts[2]));
-
-      const endParts = endStr.split('-');
-      const end = new Date(Number(endParts[0]), Number(endParts[1]) - 1, Number(endParts[2]));
-
+      const startParts = startStr.split("-");
+      const start = new Date(
+        Number(startParts[0]),
+        Number(startParts[1]) - 1,
+        Number(startParts[2]),
+      );
+      const endParts = endStr.split("-");
+      const end = new Date(
+        Number(endParts[0]),
+        Number(endParts[1]) - 1,
+        Number(endParts[2]),
+      );
       return `${format(start, "MMM d")} - ${format(end, "MMM d")}`;
     } else if (key.startsWith("date-")) {
       const dateTarget = key.replace("date-", "");
-      const parts = dateTarget.split('-');
-      const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      const parts = dateTarget.split("-");
+      const date = new Date(
+        Number(parts[0]),
+        Number(parts[1]) - 1,
+        Number(parts[2]),
+      );
       return format(date, "MMM d, yyyy");
     } else if (key.startsWith("general-")) {
       const dateTarget = key.replace("general-", "");
@@ -83,28 +131,35 @@ export default function Calendar() {
       const dateTarget = key.replace("range-", "");
       const startStr = dateTarget.substring(0, 10);
       const endStr = dateTarget.substring(11, 21);
-
-      const startParts = startStr.split('-');
-      const start = new Date(Number(startParts[0]), Number(startParts[1]) - 1, Number(startParts[2]));
-
-      const endParts = endStr.split('-');
-      const end = new Date(Number(endParts[0]), Number(endParts[1]) - 1, Number(endParts[2]));
-
+      const startParts = startStr.split("-");
+      const start = new Date(
+        Number(startParts[0]),
+        Number(startParts[1]) - 1,
+        Number(startParts[2]),
+      );
+      const endParts = endStr.split("-");
+      const end = new Date(
+        Number(endParts[0]),
+        Number(endParts[1]) - 1,
+        Number(endParts[2]),
+      );
       setStartDate(start);
       setEndDate(end);
       setCurrentDate(new Date(start.getFullYear(), start.getMonth(), 1));
     } else if (key.startsWith("date-")) {
       const dateTarget = key.replace("date-", "");
-      const parts = dateTarget.split('-');
-      const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-
+      const parts = dateTarget.split("-");
+      const date = new Date(
+        Number(parts[0]),
+        Number(parts[1]) - 1,
+        Number(parts[2]),
+      );
       setStartDate(date);
       setEndDate(null);
       setCurrentDate(new Date(date.getFullYear(), date.getMonth(), 1));
     } else if (key.startsWith("general-")) {
       const dateTarget = key.replace("general-", "");
       const [year, month] = dateTarget.split("-");
-
       setStartDate(null);
       setEndDate(null);
       setCurrentDate(new Date(parseInt(year), parseInt(month) - 1, 1));
@@ -152,16 +207,21 @@ export default function Calendar() {
       let isPreview = false;
 
       if (startDate && endDate) {
-        isWithinSelection = isWithinInterval(day, { start: startDate, end: endDate });
+        isWithinSelection = isWithinInterval(day, {
+          start: startDate,
+          end: endDate,
+        });
       } else if (startDate && hoverDate && hoverDate !== startDate) {
         const iStart = isBefore(startDate, hoverDate) ? startDate : hoverDate;
         const iEnd = isAfter(hoverDate, startDate) ? hoverDate : startDate;
         isPreview = isWithinInterval(day, { start: iStart, end: iEnd });
       }
 
-      let containerClass = "relative w-full aspect-square flex items-center justify-center cursor-pointer transition-all duration-200 select-none z-10 ";
+      let containerClass =
+        "relative w-full aspect-square flex items-center justify-center cursor-pointer transition-all duration-200 select-none z-10 ";
       let highlightClass = "absolute inset-0 z-0 transition-all duration-200 ";
-      let textClass = "z-10 text-sm font-medium transition-colors duration-200 ";
+      let textClass =
+        "z-10 text-sm font-medium transition-colors duration-200 ";
 
       if (!isCurrentMonth) {
         textClass += "text-slate-400 dark:text-slate-600";
@@ -172,13 +232,22 @@ export default function Calendar() {
       if (isStart || isEnd) {
         textClass = "z-10 text-white font-semibold";
         if (isStart && isEnd) {
-          highlightClass += "bg-indigo-600 rounded-full scale-95 shadow-md shadow-indigo-500/30";
+          highlightClass +=
+            "bg-indigo-600 rounded-full scale-95 shadow-md shadow-indigo-500/30";
         } else if (isStart) {
-          highlightClass += "bg-indigo-600 rounded-l-full scale-95 origin-right pr-2 shadow-md " + (endDate || hoverDate ? "rounded-r-none" : "rounded-r-full");
-          containerClass += endDate || (hoverDate && isAfter(hoverDate, startDate)) ? "bg-indigo-100 dark:bg-indigo-900/40 rounded-l-full scale-x-105" : "";
+          highlightClass +=
+            "bg-indigo-600 rounded-l-full scale-95 origin-right pr-2 shadow-md " +
+            (endDate || hoverDate ? "rounded-r-none" : "rounded-r-full");
+          containerClass +=
+            endDate || (hoverDate && isAfter(hoverDate, startDate))
+              ? "bg-indigo-100 dark:bg-indigo-900/40 rounded-l-full scale-x-105"
+              : "";
         } else if (isEnd) {
-          highlightClass += "bg-indigo-600 rounded-r-full scale-95 origin-left pl-2 shadow-md";
-          containerClass += startDate ? "bg-indigo-100 dark:bg-indigo-900/40 rounded-r-full scale-x-105" : "";
+          highlightClass +=
+            "bg-indigo-600 rounded-r-full scale-95 origin-left pl-2 shadow-md";
+          containerClass += startDate
+            ? "bg-indigo-100 dark:bg-indigo-900/40 rounded-r-full scale-x-105"
+            : "";
         }
       } else if (isWithinSelection) {
         containerClass += "bg-indigo-100 dark:bg-indigo-900/40";
@@ -187,13 +256,15 @@ export default function Calendar() {
         containerClass += "bg-indigo-50 dark:bg-indigo-900/20";
         textClass = "z-10 text-indigo-800/80 dark:text-indigo-200/80";
       } else {
-        containerClass += "hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full scale-95";
+        containerClass +=
+          "hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full scale-95";
       }
 
       const isToday = isSameDay(day, new Date());
       if (isToday && !isStart && !isEnd && !isWithinSelection && !isPreview) {
         textClass += " text-indigo-600 dark:text-indigo-400 font-bold";
-        highlightClass += "border border-indigo-200 dark:border-indigo-800 rounded-full scale-95";
+        highlightClass +=
+          "border border-indigo-200 dark:border-indigo-800 rounded-full scale-95";
       }
 
       return (
@@ -203,9 +274,13 @@ export default function Calendar() {
           onClick={() => handleDateClick(day)}
           onMouseEnter={() => handleDateHover(day)}
         >
-          {(isStart || isEnd || (isToday && !isStart && !isEnd && !isWithinSelection && !isPreview)) && (
-            <div className={highlightClass}></div>
-          )}
+          {(isStart ||
+            isEnd ||
+            (isToday &&
+              !isStart &&
+              !isEnd &&
+              !isWithinSelection &&
+              !isPreview)) && <div className={highlightClass}></div>}
           <span className={textClass}>{format(day, dateFormat)}</span>
         </div>
       );
@@ -214,9 +289,7 @@ export default function Calendar() {
 
   return (
     <div className="w-full max-w-5xl mx-auto rounded-[2rem] overflow-hidden shadow-2xl bg-white dark:bg-slate-900 flex flex-col md:flex-row transition-colors duration-500">
-
       <div className="flex-1 flex flex-col relative w-full md:w-2/3 border-r border-slate-100 dark:border-slate-800">
-
         <div className="relative h-48 md:h-64 w-full overflow-hidden bg-slate-200 dark:bg-slate-800">
           <img
             src="/hero.jpg"
@@ -224,7 +297,6 @@ export default function Calendar() {
             className="w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity duration-700 hover:scale-105 transform"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-
           <div className="absolute bottom-6 left-8 right-8 flex items-end justify-between">
             <div className="text-white">
               <AnimatePresence mode="wait">
@@ -244,7 +316,6 @@ export default function Calendar() {
                 </motion.div>
               </AnimatePresence>
             </div>
-
             <div className="flex items-center gap-2">
               <button
                 onClick={prevMonth}
@@ -263,16 +334,17 @@ export default function Calendar() {
         </div>
 
         <div className="p-6 md:p-8 bg-white dark:bg-slate-900 transition-colors duration-500 font-inter relative z-10">
-
           <div className="grid grid-cols-7 gap-y-6 mb-4">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d, i) => (
-              <div key={i} className="text-center text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <div
+                key={i}
+                className="text-center text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500"
+              >
                 {d}
               </div>
             ))}
             {renderDays()}
           </div>
-
         </div>
       </div>
 
@@ -310,7 +382,6 @@ export default function Calendar() {
               value={notes[currentKey] || ""}
               onChange={handleNoteChange}
             />
-
           </div>
 
           <div className="flex-1 flex flex-col min-h-0">
@@ -322,34 +393,73 @@ export default function Calendar() {
                 {Object.entries(notes)
                   .filter(([_, value]) => value.trim() !== "")
                   .sort((a, b) => b[0].localeCompare(a[0]))
-                  .map(([key, value]) => (
-                    <motion.div
-                      layout
-                      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      transition={{ duration: 0.2 }}
-                      key={key}
-                      className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-700/60 shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all cursor-pointer group/note"
-                      onClick={() => handleNoteClick(key)}
-                    >
-                      <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mb-1.5 flex items-center justify-between">
-                        <span>{formatNoteLabel(key)}</span>
-                        {currentKey === key && (
-                          <span className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.8)]"></span>
-                        )}
-                      </div>
-                      <div className="text-sm text-slate-600 dark:text-slate-300 line-clamp-3 whitespace-pre-wrap group-hover/note:text-slate-800 dark:group-hover/note:text-slate-100 transition-colors">
-                        {value}
-                      </div>
-                    </motion.div>
-                  ))}
+                  .map(([key, value]) => {
+                    const isDone = doneNotes[key];
+                    return (
+                      <motion.div
+                        layout
+                        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                        animate={{ opacity: isDone ? 0.55 : 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        transition={{ duration: 0.2 }}
+                        key={key}
+                        className={`p-4 rounded-xl bg-white dark:bg-slate-900 border shadow-sm hover:shadow-md transition-all cursor-pointer group/note ${
+                          isDone
+                            ? "border-slate-200/40 dark:border-slate-700/40"
+                            : "border-slate-200/60 dark:border-slate-700/60 hover:border-indigo-300 dark:hover:border-indigo-700"
+                        }`}
+                        onClick={() => handleNoteClick(key)}
+                      >
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span
+                            className={`text-xs font-bold ${isDone ? "text-slate-400 dark:text-slate-500 line-through" : "text-indigo-600 dark:text-indigo-400"}`}
+                          >
+                            {formatNoteLabel(key)}
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            {currentKey === key && !isDone && (
+                              <span className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.8)]"></span>
+                            )}
+                            {/* Mark as done */}
+                            <button
+                              onClick={(e) => handleToggleDone(e, key)}
+                              className={`opacity-0 group-hover/note:opacity-100 transition-opacity p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 ${isDone ? "!opacity-100 text-green-500" : "text-slate-400 hover:text-green-500"}`}
+                              title={isDone ? "Mark as undone" : "Mark as done"}
+                            >
+                              {isDone ? (
+                                <CheckCircle2 size={15} />
+                              ) : (
+                                <Circle size={15} />
+                              )}
+                            </button>
+                            {/* Delete */}
+                            <button
+                              onClick={(e) => handleDeleteNote(e, key)}
+                              className="opacity-0 group-hover/note:opacity-100 transition-opacity p-1 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                              title="Delete note"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        </div>
+                        <div
+                          className={`text-sm leading-relaxed whitespace-pre-wrap transition-colors ${
+                            isDone
+                              ? "text-slate-400 dark:text-slate-500 line-through"
+                              : "text-slate-600 dark:text-slate-300 group-hover/note:text-slate-800 dark:group-hover/note:text-slate-100"
+                          }`}
+                        >
+                          {value}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
               </AnimatePresence>
 
-              {Object.values(notes).every(v => v.trim() === "") && (
-                <motion.div 
-                  initial={{ opacity: 0 }} 
-                  animate={{ opacity: 1 }} 
+              {Object.values(notes).every((v) => v.trim() === "") && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   className="text-sm text-slate-500 dark:text-slate-400 italic text-center py-8 bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-300 dark:border-slate-700"
                 >
                   No notes saved yet. Select a date to add one!
@@ -359,7 +469,6 @@ export default function Calendar() {
           </div>
         </div>
       </div>
-
     </div>
   );
 }
